@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#18864b">
+<title>جمعية الخير للجميع | النظام المركزي</title>
+<style>
+:root{--g:#18864b;--g2:#0b6838;--o:#efa51b;--b:#176bb4;--r:#c62828;--bg:#f4f7f5;--line:#dfe9e4;--text:#18352b;--muted:#6c7c76}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:10px;padding:10px 13px;cursor:pointer}
+input,select,textarea{width:100%;padding:10px;border:1px solid #d7e1dd;border-radius:9px;background:#fff}
+.primary{background:var(--g);color:#fff}.secondary{background:#e9f5ef;color:var(--g2)}.warn{background:#fff1d2;color:#956100}.danger{background:#ffe8e8;color:#a31d1d}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(145deg,#e9f5ef,#fff)}
+.loginbox{width:min(430px,100%);background:#fff;border-radius:22px;padding:25px;box-shadow:0 8px 30px #0002;text-align:center}.loginbox img{width:115px;height:115px;object-fit:contain;border-radius:18px}.loginbox h1{font-size:20px;color:var(--g2)}
+.field{text-align:right;margin:10px 0}.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.app{display:none}.app.show{display:block}header{height:76px;background:linear-gradient(135deg,var(--g2),var(--g));color:#fff;display:flex;align-items:center;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10}
+header img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px}header h1{margin:0;font-size:17px}header small{opacity:.9}
+.user{margin-right:auto;display:flex;align-items:center;gap:8px}.avatar{width:38px;height:38px;border-radius:50%;background:#fff3;color:#fff;display:grid;place-items:center;font-weight:bold}
+nav{display:flex;gap:6px;overflow:auto;padding:10px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:9}nav button{white-space:nowrap;background:#edf5f0;color:var(--g2)}nav button.active{background:var(--g);color:#fff}
+main{max-width:1150px;margin:auto;padding:14px}.page{display:none}.page.active{display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#fff;border-radius:15px;padding:15px;box-shadow:0 2px 9px #0000000b}.stat span{font-size:12px;color:var(--muted)}.stat b{display:block;font-size:25px;margin-top:5px}
+.card{background:#fff;border-radius:15px;padding:15px;margin-top:12px;box-shadow:0 2px 9px #0000000b}.card h2{margin:0 0 13px;font-size:17px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0}.toolbar input{flex:1;min-width:210px}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.check{border:1px solid var(--line);padding:8px;border-radius:8px}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #edf1ef;text-align:right;vertical-align:top}th{font-size:12px;color:#60716a}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eaf6ef;color:var(--g2);font-size:11px;margin:2px}.badge.o{background:#fff0d2;color:#986400}.badge.r{background:#ffe7e7;color:#a61d1d}.badge.b{background:#e8f2fb;color:#1265a8}
+.modal{position:fixed;inset:0;background:#0008;display:flex;justify-content:center;align-items:center;padding:12px;z-index:30}.box{background:#fff;border-radius:17px;padding:17px;width:min(850px,100%);max-height:94vh;overflow:auto}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tabs{display:flex;gap:5px;overflow:auto;margin:12px 0}.tabs button{background:#edf5f0;color:var(--g2);white-space:nowrap}.tabs button.active{background:var(--g);color:#fff}
+.hidden{display:none!important}.empty{text-align:center;color:var(--muted);padding:28px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin:7px 0}
+.notice{background:#fff9e8;border:1px solid #f0d58a;padding:11px;border-radius:10px;font-size:13px}.success{background:#eaf6ef;color:#12623a;padding:10px;border-radius:10px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.checks{grid-template-columns:repeat(2,1fr)}header h1{font-size:14px}.user span{display:none}th:nth-child(3),td:nth-child(3){display:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+</head>
+<body>
+
+<section id="login" class="login">
+<div class="loginbox">
+<img src="logo.jpg"><h1>جمعية الخير للجميع</h1><p>نظام إدارة الحالات والمساعدات</p>
+<div class="field"><label>اسم المستخدم</label><input id="loginUser" value="admin"></div>
+<div class="field"><label>كلمة المرور</label><input id="loginPass" type="password" value="1234"></div><div class="field"><label>الاتصال السحابي</label><input id="apiUrl" placeholder="مثال: http://192.168.1.50:8000"></div>
+<button class="primary" style="width:100%" onclick="login()">دخول</button>
+<p style="font-size:11px;color:#777">حساب تجريبي: admin / 1234</p>
+</div></section>
+
+<section id="app" class="app">
+<header><img src="logo.jpg"><div><h1>جمعية الخير للجميع</h1><small>نظام إدارة الحالات والمساعدات</small></div><div class="user"><div class="avatar" id="avatar">م</div><span id="who"></span><button class="danger" onclick="logout()">خروج</button></div></header>
+<nav id="nav">
+<button class="active" onclick="page('home',this)">الرئيسية</button>
+<button onclick="page('cases',this)">الحالات</button>
+<button onclick="page('reports',this)">التقارير</button>
+<button onclick="page('users',this)">المستخدمون</button>
+<button onclick="page('backup',this)">النسخ الاحتياطي</button>
+</nav>
+<main>
+<section id="home" class="page active">
+<div class="grid"><div class="stat"><span>إجمالي الحالات</span><b id="st">0</b></div><div class="stat"><span>تحتاج متابعة</span><b id="sf">0</b></div><div class="stat"><span>عاجلة</span><b id="su">0</b></div><div class="stat"><span>إجمالي المساعدات</span><b id="sm">0 ج.م</b></div></div>
+<div class="card"><h2>بحث سريع</h2><div class="toolbar"><input id="quick" placeholder="اسم الحالة أو الرقم القومي أو رقم الحالة..." oninput="quickSearch()"><button class="primary" onclick="openCase()">+ إضافة حالة</button></div><div id="quickResult"></div></div>
+<div class="card"><h2>آخر الحالات</h2><div id="latest"></div></div>
+</section>
+
+<section id="cases" class="page">
+<div class="toolbar"><input id="q" placeholder="بحث بالاسم / رقم الحالة / الرقم القومي / الهاتف" oninput="renderCases()"><button class="primary" onclick="openCase()">+ حالة جديدة</button></div>
+<div class="card"><div class="toolbar"><select id="nf" onchange="renderCases()"><option value="">كل الاحتياجات</option></select><select id="pf" onchange="renderCases()"><option value="">كل درجات الاحتياج</option><option>عاجل</option><option>متوسط</option><option>عادي</option></select><select id="ff" onchange="renderCases()"><option value="">كل الحالات</option><option value="1">تحتاج متابعة</option><option value="0">لا تحتاج متابعة</option></select></div><div id="caseTable"></div></div>
+</section>
+
+<section id="reports" class="page">
+<div class="grid"><div class="stat"><span>عدد الحالات</span><b id="rr1">0</b></div><div class="stat"><span>إجمالي أفراد الأسر</span><b id="rr2">0</b></div><div class="stat"><span>حالات علاج</span><b id="rr3">0</b></div><div class="stat"><span>حالات طارئة</span><b id="rr4">0</b></div></div>
+<div class="card"><h2>الحالات حسب الاحتياج</h2><div id="needReport"></div></div><div class="card"><h2>المساعدات حسب النوع</h2><div id="aidReport"></div></div>
+</section>
+
+<section id="users" class="page">
+<div class="card"><div class="top"><h2>المستخدمون والصلاحيات</h2><button class="primary" onclick="addUser()">+ مستخدم</button></div><div id="usersList"></div></div>
+<div class="card"><h2>الأدوار</h2><div class="row"><b>مدير النظام</b><span>كل الصلاحيات</span></div><div class="row"><b>باحث اجتماعي</b><span>إضافة وتعديل الحالات والزيارات</span></div><div class="row"><b>محاسب</b><span>تسجيل ومراجعة المساعدات</span></div><div class="row"><b>متطوع</b><span>عرض الحالات المسموح بها</span></div></div>
+</section>
+
+<section id="backup" class="page">
+<div class="card"><h2>النسخ الاحتياطي</h2><div class="notice">هذه النسخة تعمل محليًا على الجهاز. قبل التشغيل المركزي سننقل البيانات إلى قاعدة بيانات مشتركة وآمنة.</div><div class="toolbar"><button class="primary" onclick="exportData()">⬇ تصدير البيانات</button><label class="secondary" style="padding:10px 13px;border-radius:10px;cursor:pointer">⬆ استيراد البيانات <input type="file" hidden accept=".json" onchange="importData(this.files[0])"></label></div></div>
+</section>
+</main><footer>جمعية الخير للجميع — نسخة تجريبية متقدمة</footer>
+</section>
+
+<div id="caseModal" class="modal hidden"><div class="box">
+<div class="top"><h2 id="ctitle">إضافة حالة</h2><button class="danger" onclick="closeM('caseModal')">إغلاق</button></div>
+<form id="caseForm" class="formgrid" onsubmit="saveCase(event)">
+<input type="hidden" id="cid">
+<div class="field"><label>اسم الحالة *</label><input id="name" required></div><div class="field"><label>الرقم القومي *</label><input id="nid" required></div>
+<div class="field"><label>تاريخ الميلاد</label><input id="birth" type="date"></div><div class="field"><label>الحالة الاجتماعية</label><select id="social"><option>متزوج</option><option>أعزب</option><option>أرمل</option><option>مطلق</option></select></div>
+<div class="field"><label>الهاتف</label><input id="phone"></div><div class="field"><label>واتساب</label><input id="wa"></div>
+<div class="field"><label>القرية / المنطقة</label><input id="area"></div><div class="field"><label>عدد أفراد الأسرة</label><input id="members" type="number" min="1" value="1"></div>
+<div class="field full"><label>العنوان</label><input id="address"></div><div class="field full"><label>مصدر الدخل</label><input id="income"></div>
+<div class="field full"><label>الاحتياجات</label><div id="needsChecks" class="checks"></div></div>
+<div class="field"><label>درجة الاحتياج</label><select id="priority"><option>عادي</option><option>متوسط</option><option>عاجل</option></select></div>
+<div class="field"><label>حالة الملف</label><select id="status"><option>نشطة</option><option>مغلقة</option><option>تحت الدراسة</option><option>موقوفة</option></select></div>
+<div class="field full"><label>ملاحظات</label><textarea id="notes"></textarea></div>
+<div class="full"><button class="primary">حفظ الحالة</button></div>
+</form></div></div>
+
+<div id="detailModal" class="modal hidden"><div class="box"><div class="top"><div><h2 id="dn"></h2><span class="badge b" id="dno"></span></div><button class="danger" onclick="closeM('detailModal')">إغلاق</button></div>
+<div class="tabs" id="dtabs"><button class="active" onclick="dt('data',this)">البيانات</button><button onclick="dt('family',this)">الأسرة</button><button onclick="dt('needs',this)">الاحتياجات</button><button onclick="dt('aid',this)">المساعدات</button><button onclick="dt('docs',this)">المستندات</button><button onclick="dt('visits',this)">الزيارات</button></div>
+<div id="data"></div><div id="family" class="hidden"></div><div id="needs" class="hidden"></div><div id="aid" class="hidden"></div><div id="docs" class="hidden"></div><div id="visits" class="hidden"></div>
+</div></div>
+
+<div id="aidModal" class="modal hidden"><div class="box"><h2>تسجيل مساعدة</h2><form class="formgrid" onsubmit="saveAid(event)">
+<div class="field"><label>النوع</label><select id="atype"><option>مساعدة مالية</option><option>مواد غذائية</option><option>علاج</option><option>أدوية</option><option>إيجار</option><option>كهرباء / مياه</option><option>تعليم</option><option>ملابس</option><option>تجهيز منزل</option><option>أجهزة</option><option>مساعدة شهرية</option><option>حالة طارئة</option><option>أخرى</option></select></div>
+<div class="field"><label>المبلغ</label><input id="amount" type="number" min="0" value="0"></div><div class="field"><label>التاريخ</label><input id="adate" type="date"></div><div class="field"><label>المسؤول</label><input id="aby"></div>
+<div class="field full"><label>ملاحظات</label><textarea id="anote"></textarea></div><div class="full"><button class="primary">حفظ</button><button type="button" class="danger" onclick="closeM('aidModal')">إلغاء</button></div>
+</form></div></div>
+
+<script>
+const NEEDS=['مساعدة مالية','مواد غذائية','علاج','أدوية','إيجار','كهرباء / مياه','تعليم','ملابس','تجهيز منزل','أجهزة','مساعدة شهرية','حالة طارئة','أخرى'];
+const ROLES=['مدير النظام','باحث اجتماعي','محاسب','متطوع'];
+let cases=[];
+let users=[
+{id:'1',name:'مدير الجمعية',username:'admin',role:'مدير النظام',active:true},
+{id:'2',name:'باحث اجتماعي',username:'researcher',role:'باحث اجتماعي',active:true},
+{id:'3',name:'المحاسب',username:'accountant',role:'محاسب',active:true}];
+let current=null, session=null;
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const sb = window.supabase.createClient(window.JKH_SUPABASE_URL, window.JKH_SUPABASE_ANON_KEY);
+$('apiUrl').value = 'سحابي — لا يحتاج Wi‑Fi مشترك';
+async function loadCentral(){
+  const {data,error}=await sb.from('app_state').select('payload').eq('id',1).single();
+  if(error) throw error;
+  const s=data?.payload||{};
+  cases=s.cases||[]; users=s.users||[]; renderAll();
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const {error}=await sb.from('app_state').upsert({id:1,payload:{version:5,cases,users},updated_at:new Date().toISOString()});
+    if(error) alert('تعذر حفظ البيانات سحابيًا: '+error.message);
+  },250);
+}
+async function login(){
+  const u=$('loginUser').value.trim(), p=$('loginPass').value;
+  try{
+    const {data,error}=await sb.rpc('login_staff',{p_username:u,p_password:p});
+    if(error || !data?.user) throw new Error('بيانات الدخول غير صحيحة');
+    session=data.user;
+    $('login').style.display='none'; $('app').classList.add('show');
+    $('who').textContent=session.name+' — '+session.role;
+    $('avatar').textContent=session.name[0]||'م';
+    await loadCentral();
+  }catch(e){alert(e.message||'تعذر تسجيل الدخول. تأكد من إعداد قاعدة البيانات.')}
+}
+async function logout(){await sb.auth.signOut().catch(()=>{});session=null;$('app').classList.remove('show');$('login').style.display='flex'}
+function page(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='cases')renderCases();if(id==='reports')renderReports();if(id==='users')renderUsers()}
+function closeM(id){$(id).classList.add('hidden')}
+function nextNo(){return String(cases.length?Math.max(...cases.map(c=>+c.no||0))+1:1).padStart(6,'0')}
+function initChecks(sel=[]){$('needsChecks').innerHTML=NEEDS.map(n=>`<label class="check"><input type="checkbox" value="${n}" ${sel.includes(n)?'checked':''}> ${n}</label>`).join('')}
+function openCase(c=null){$('caseModal').classList.remove('hidden');$('ctitle').textContent=c?'تعديل حالة':'إضافة حالة';$('cid').value=c?.id||'';for(let k of ['name','nid','birth','phone','wa','area','members','address','income','notes'])$(k).value=c?.[k]??(k==='members'?1:'');$('social').value=c?.social||'متزوج';$('priority').value=c?.priority||'عادي';$('status').value=c?.status||'نشطة';initChecks(c?.needs||[])}
+function saveCase(e){e.preventDefault();let id=$('cid').value,c=id?cases.find(x=>x.id===id):null,o={id:id||crypto.randomUUID(),no:c?.no||nextNo(),name:$('name').value.trim(),nid:$('nid').value.trim(),birth:$('birth').value,social:$('social').value,phone:$('phone').value.trim(),wa:$('wa').value.trim(),area:$('area').value.trim(),members:+$('members').value||1,address:$('address').value.trim(),income:$('income').value.trim(),needs:[...document.querySelectorAll('#needsChecks input:checked')].map(x=>x.value),priority:$('priority').value,status:$('status').value,notes:$('notes').value.trim(),created:c?.created||new Date().toISOString(),follow:c?.follow||false,family:c?.family||[],aid:c?.aid||[],docs:c?.docs||[],visits:c?.visits||[]};if(c)Object.assign(c,o);else cases.unshift(o);save();closeM('caseModal');renderAll()}
+function renderCases(){let q=($('q').value||'').toLowerCase(),n=$('nf').value,p=$('pf').value,f=$('ff').value;let a=cases.filter(c=>([c.name,c.no,c.nid,c.phone,c.wa].join(' ').toLowerCase().includes(q))&&(!n||c.needs.includes(n))&&(!p||c.priority===p)&&(f===''||String(c.follow?1:0)===f));$('caseTable').innerHTML=a.length?`<table><thead><tr><th>رقم</th><th>الحالة</th><th>التواصل</th><th>الأفراد</th><th>الاحتياج</th><th></th></tr></thead><tbody>${a.map(c=>`<tr><td>${c.no}</td><td><b>${esc(c.name)}</b><br><span class="badge ${c.priority==='عاجل'?'r':c.priority==='متوسط'?'o':''}">${c.priority}</span> <span class="badge">${c.status}</span></td><td>${esc(c.phone||'-')}<br>${esc(c.wa||'')}</td><td>${c.members}</td><td>${c.needs.slice(0,2).map(x=>`<span class="badge">${esc(x)}</span>`).join('')}</td><td><button class="secondary" onclick="openDetail('${c.id}')">فتح الملف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد حالات.</div>'}
+function quickSearch(){let q=$('quick').value.toLowerCase().trim();if(!q){$('quickResult').innerHTML='';return}let a=cases.filter(c=>[c.name,c.no,c.nid,c.phone,c.wa].join(' ').toLowerCase().includes(q)).slice(0,8);$('quickResult').innerHTML=a.map(c=>`<div class="row"><div><b>${esc(c.name)}</b><br><small>الحالة ${c.no} — ${esc(c.area||'')}</small></div><button class="secondary" onclick="openDetail('${c.id}')">فتح</button></div>`).join('')||'<div class="empty">لا توجد نتيجة.</div>'}
+function openDetail(id){current=cases.find(c=>c.id===id);if(!current)return;$('detailModal').classList.remove('hidden');$('dn').textContent=current.name;$('dno').textContent='رقم الحالة '+current.no;renderDetail();dt('data',document.querySelector('#dtabs button'))}
+function renderDetail(){
+$('data').innerHTML=`<div class="card"><div class="formgrid"><p><b>الرقم القومي:</b> ${esc(current.nid)}</p><p><b>الهاتف:</b> ${esc(current.phone||'-')}</p><p><b>الواتساب:</b> ${esc(current.wa||'-')}</p><p><b>الحالة الاجتماعية:</b> ${esc(current.social)}</p><p><b>العنوان:</b> ${esc(current.address||'-')}</p><p><b>المنطقة:</b> ${esc(current.area||'-')}</p><p><b>عدد الأفراد:</b> ${current.members}</p><p><b>الدخل:</b> ${esc(current.income||'-')}</p><p><b>حالة الملف:</b> ${esc(current.status)}</p><p><b>المتابعة:</b> ${current.follow?'مطلوبة':'لا'}</p></div><hr><b>ملاحظات:</b> ${esc(current.notes||'-')}<div class="toolbar"><button class="primary" onclick="openCase(current)">تعديل</button><button class="warn" onclick="toggleFollow()">تغيير المتابعة</button><button class="secondary" onclick="printCase()">طباعة الملف</button></div></div>`;
+$('family').innerHTML=`<div class="card"><h2>أفراد الأسرة (${current.family.length})</h2>${current.family.map((m,i)=>`<div class="row"><div><b>${esc(m.name)}</b><br>${esc(m.relation)} — ${esc(m.age)} سنة — ${esc(m.status)}</div><button class="danger" onclick="removeFamily(${i})">حذف</button></div>`).join('')||'<div class="empty">لم تتم إضافة أفراد.</div>'}<button class="primary" onclick="addFamily()">+ إضافة فرد</button></div>`;
+$('needs').innerHTML=`<div class="card"><h2>الاحتياجات</h2>${current.needs.map(x=>`<span class="badge">${esc(x)}</span>`).join('')||'لا توجد'}<p>الأولوية: <span class="badge ${current.priority==='عاجل'?'r':current.priority==='متوسط'?'o':''}">${current.priority}</span></p></div>`;
+$('aid').innerHTML=`<div class="card"><h2>سجل المساعدات</h2>${current.aid.map((a,i)=>`<div class="row"><div><b>${esc(a.type)}</b> — ${(+a.amount||0).toLocaleString('ar-EG')} ج.م<br><small>${esc(a.date)} — ${esc(a.by||'')}</small></div><button class="danger" onclick="removeAid(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد مساعدات.</div>'}<button class="primary" onclick="openAid()">+ تسجيل مساعدة</button></div>`;
+$('docs').innerHTML=`<div class="card"><h2>المستندات</h2><input id="docFile" type="file" accept="image/*,.pdf"><button class="primary" style="margin-top:8px" onclick="addDoc()">رفع المستند</button>${current.docs.map((d,i)=>`<div class="row"><div><b>${esc(d.name)}</b><br><small>${esc(d.type)} — ${esc(d.date)}</small></div><div>${d.url?`<a class="secondary" style="padding:8px 10px;border-radius:8px;text-decoration:none" target="_blank" href="${esc(d.url)}">فتح</a>`:''}<button class="danger" onclick="removeDoc(${i})">حذف</button></div></div>`).join('')||'<div class="empty">لا توجد مستندات.</div>'}</div>`;
+$('visits').innerHTML=`<div class="card"><h2>الزيارات والبحث الاجتماعي</h2>${current.visits.map((v,i)=>`<div class="row"><div><b>${esc(v.date)}</b> — ${esc(v.by||'')}<br>${esc(v.note)}</div><button class="danger" onclick="removeVisit(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد زيارات.</div>'}<button class="primary" onclick="addVisit()">+ تسجيل زيارة</button></div>`}
+function dt(id,btn){['data','family','needs','aid','docs','visits'].forEach(x=>$(x).classList.toggle('hidden',x!==id));document.querySelectorAll('#dtabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
+function toggleFollow(){current.follow=!current.follow;save();renderDetail();renderAll()}
+function addFamily(){let name=prompt('اسم الفرد؟');if(!name)return;current.family.push({name,relation:prompt('صلة القرابة؟','ابن/ابنة'),age:prompt('العمر؟',''),status:prompt('الحالة؟','')});save();renderDetail()}
+function removeFamily(i){current.family.splice(i,1);save();renderDetail()}
+function openAid(){$('aidModal').classList.remove('hidden');$('adate').value=new Date().toISOString().slice(0,10);$('aby').value=session?.name||''}
+function saveAid(e){e.preventDefault();current.aid.unshift({type:$('atype').value,amount:+$('amount').value||0,date:$('adate').value,by:$('aby').value,note:$('anote').value});save();closeM('aidModal');renderDetail();renderAll()}
+function removeAid(i){current.aid.splice(i,1);save();renderDetail();renderAll()}
+async function addDoc(){
+  const f=$('docFile').files[0]; if(!f)return alert('اختر ملفًا');
+  if(f.size>10000000)return alert('الحد الأقصى للمستند 10MB.');
+  try{
+    const safeName=f.name.replace(/[^\w\u0600-\u06FF. -]/g,'_');
+    const path=`cases/${current.id}/${Date.now()}_${safeName}`;
+    const {error}=await sb.storage.from('case-documents').upload(path,f,{upsert:false});
+    if(error) throw error;
+    const {data}=sb.storage.from('case-documents').getPublicUrl(path);
+    current.docs.push({name:f.name,type:f.type,date:new Date().toLocaleDateString('ar-EG'),url:data.publicUrl,path});
+    save(); renderDetail();
+  }catch(e){alert('فشل رفع المستند: '+e.message)}
+}
+function removeDoc(i){current.docs.splice(i,1);save();renderDetail()}
+function addVisit(){let note=prompt('ملخص الزيارة / البحث الاجتماعي؟');if(!note)return;current.visits.unshift({date:new Date().toLocaleDateString('ar-EG'),by:session?.name||'',note});save();renderDetail()}
+function removeVisit(i){current.visits.splice(i,1);save();renderDetail()}
+function renderReports(){let n={},a={};cases.forEach(c=>c.needs.forEach(x=>n[x]=(n[x]||0)+1));cases.forEach(c=>c.aid.forEach(x=>a[x.type]=(a[x.type]||0)+(+x.amount||0)));$('rr1').textContent=cases.length;$('rr2').textContent=cases.reduce((s,c)=>s+c.members,0);$('rr3').textContent=cases.filter(c=>c.needs.includes('علاج')||c.needs.includes('أدوية')).length;$('rr4').textContent=cases.filter(c=>c.needs.includes('حالة طارئة')).length;$('needReport').innerHTML=Object.entries(n).sort((a,b)=>b[1]-a[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1]} حالة</span></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';$('aidReport').innerHTML=Object.entries(a).sort((x,y)=>y[1]-x[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1].toLocaleString('ar-EG')} ج.م</span></div>`).join('')||'<div class="empty">لا توجد مساعدات.</div>'}
+function renderUsers(){$('usersList').innerHTML=users.map((u,i)=>`<div class="row"><div><b>${esc(u.name)}</b><br><small>${esc(u.username)} — ${esc(u.role)}</small></div><span>${u.active?'<span class="badge">نشط</span>':'<span class="badge r">موقوف</span>'}</span><button class="secondary" onclick="toggleUser(${i})">${u.active?'إيقاف':'تفعيل'}</button></div>`).join('')}
+function addUser(){let name=prompt('اسم المستخدم؟');if(!name)return;let username=prompt('اسم الدخول؟');if(!username)return;let role=prompt('الدور: مدير النظام / باحث اجتماعي / محاسب / متطوع','متطوع');if(!ROLES.includes(role))role='متطوع';users.push({id:crypto.randomUUID(),name,username,role,active:true});save();renderUsers()}
+function toggleUser(i){users[i].active=!users[i].active;save();renderUsers()}
+function updateStats(){$('st').textContent=cases.length;$('sf').textContent=cases.filter(c=>c.follow).length;$('su').textContent=cases.filter(c=>c.priority==='عاجل').length;$('sm').textContent=cases.reduce((s,c)=>s+c.aid.reduce((x,a)=>x+(+a.amount||0),0),0).toLocaleString('ar-EG')+' ج.م'}
+function renderLatest(){$('latest').innerHTML=cases.slice(0,7).map(c=>`<div class="row"><div><b>${esc(c.name)}</b><br><small>الحالة ${c.no} — ${esc(c.area||'')}</small></div><button class="secondary" onclick="openDetail('${c.id}')">فتح</button></div>`).join('')||'<div class="empty">لا توجد حالات.</div>'}
+function renderAll(){updateStats();renderLatest();$('nf').innerHTML='<option value="">كل الاحتياجات</option>'+NEEDS.map(x=>`<option>${x}</option>`).join('');renderCases();renderReports();renderUsers()}
+function exportData(){let payload={version:3,exportedAt:new Date().toISOString(),cases,users};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download='جمعية_الخير_للجميع_نسخة_احتياطية.json';a.click()}
+function importData(f){if(!f)return;let r=new FileReader();r.onload=()=>{try{let p=JSON.parse(r.result);if(!Array.isArray(p.cases))throw 0;if(confirm('استبدال البيانات الحالية؟')){cases=p.cases;users=p.users||users;save();renderAll();alert('تم الاستيراد')}}catch(e){alert('ملف غير صالح')}};r.readAsText(f)}
+function printCase(){let w=window.open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:25px"><h1 style="color:#18864b">جمعية الخير للجميع</h1><h2>ملف الحالة رقم ${current.no}</h2><table border="1" cellpadding="8" cellspacing="0" width="100%">${[['الاسم',current.name],['الرقم القومي',current.nid],['الهاتف',current.phone],['الواتساب',current.wa],['العنوان',current.address],['المنطقة',current.area],['عدد الأفراد',current.members],['الحالة الاجتماعية',current.social],['الاحتياجات',current.needs.join('، ')],['الأولوية',current.priority],['الحالة',current.status],['الملاحظات',current.notes]].map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</table></body></html>`);w.document.close();w.print()}
+initChecks();
+</script>
+</body></html>
