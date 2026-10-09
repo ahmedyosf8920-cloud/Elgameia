@@ -1,30 +1,19 @@
-name: Build Android APK
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main, master ]
-permissions:
-  contents: read
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-      - name: Build debug APK
-        working-directory: android
-        run: gradle assembleDebug
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: jkhair-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+جمعية الخير للجميع — مشروع Android محدث بواجهة الإصدار 7.2
+
+المشروع يضم واجهة الويب الحالية وملف config.js وإعدادات WebView.
+تُحمّل الواجهة من أصول التطبيق، لكنها تتصل بخدمات Supabase عبر الإنترنت.
+يجب أن يكون مشروع Supabase والجداول والسياسات مُعدّة بالفعل وأن يكون config.js مضبوطًا على المشروع الصحيح.
+
+فتح المشروع:
+1) فك ضغط الملف.
+2) افتح مجلد android باستخدام Android Studio.
+3) انتظر Gradle Sync.
+4) من Build اختر Build APK(s).
+5) ستجد ملف APK داخل android/app/build/outputs/apk/debug/ بعد نجاح البناء.
+
+مهم:
+- هذا ملف مشروع Android وليس APK جاهزًا.
+- بيئة إعداد هذا الملف لا تحتوي على Android SDK/Gradle لبناء APK والتحقق منه هنا.
+- بيانات السجلات تُحمّل من قاعدة Supabase app_state إذا كانت القاعدة مُعدة وتحتوي البيانات.
+- لا تدخل بيانات حقيقية قبل مراجعة سياسات الأمان وصلاحيات الوصول؛ مخطط SQL المرفق تجريبي وسياساته واسعة.
+- النسخ الاحتياطي/الاستعادة داخل الواجهة يعتمد على وظائف الويب الموجودة؛ اختبر التصدير والاستيراد على نسخة تجريبية قبل الاستخدام الفعلي.
