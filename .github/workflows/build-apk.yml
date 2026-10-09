@@ -1,19 +1,47 @@
-جمعية الخير للجميع — مشروع Android محدث بواجهة الإصدار 7.2
+name: Build Android APK
 
-المشروع يضم واجهة الويب الحالية وملف config.js وإعدادات WebView.
-تُحمّل الواجهة من أصول التطبيق، لكنها تتصل بخدمات Supabase عبر الإنترنت.
-يجب أن يكون مشروع Supabase والجداول والسياسات مُعدّة بالفعل وأن يكون config.js مضبوطًا على المشروع الصحيح.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
 
-فتح المشروع:
-1) فك ضغط الملف.
-2) افتح مجلد android باستخدام Android Studio.
-3) انتظر Gradle Sync.
-4) من Build اختر Build APK(s).
-5) ستجد ملف APK داخل android/app/build/outputs/apk/debug/ بعد نجاح البناء.
+permissions:
+  contents: read
 
-مهم:
-- هذا ملف مشروع Android وليس APK جاهزًا.
-- بيئة إعداد هذا الملف لا تحتوي على Android SDK/Gradle لبناء APK والتحقق منه هنا.
-- بيانات السجلات تُحمّل من قاعدة Supabase app_state إذا كانت القاعدة مُعدة وتحتوي البيانات.
-- لا تدخل بيانات حقيقية قبل مراجعة سياسات الأمان وصلاحيات الوصول؛ مخطط SQL المرفق تجريبي وسياساته واسعة.
-- النسخ الاحتياطي/الاستعادة داخل الواجهة يعتمد على وظائف الويب الموجودة؛ اختبر التصدير والاستيراد على نسخة تجريبية قبل الاستخدام الفعلي.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME" || exit 1
+          ls "$ANDROID_HOME"
+
+      - name: Install Gradle
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jkhair-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
