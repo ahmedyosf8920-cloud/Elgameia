@@ -24,11 +24,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Check Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          test -d "$ANDROID_HOME" || exit 1
-          ls "$ANDROID_HOME"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Install Gradle
         run: |
@@ -36,12 +36,34 @@ jobs:
           unzip -q /tmp/gradle.zip -d /tmp
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Build debug APK
-        working-directory: android
-        run: gradle --no-daemon assembleDebug
+      - name: Find Android project and build
+        id: build
+        shell: bash
+        run: |
+          BUILD_FILE="$(find . -type f -path '*/app/build.gradle' -print -quit)"
+
+          if [ -z "$BUILD_FILE" ]; then
+            echo "ERROR: app/build.gradle not found in repository"
+            find . -maxdepth 5 -type f | head -200
+            exit 1
+          fi
+
+          ANDROID_DIR="$(dirname "$(dirname "$BUILD_FILE")")"
+          echo "Android project: $ANDROID_DIR"
+
+          gradle --no-daemon -p "$ANDROID_DIR" assembleDebug
+
+          APK="$(find "$ANDROID_DIR/app/build/outputs/apk/debug" -name '*.apk' -print -quit)"
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK was not generated"
+            exit 1
+          fi
+
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: jkhair-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ steps.build.outputs.apk_path }}
