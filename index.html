@@ -30,17 +30,20 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
 @media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.checks{grid-template-columns:repeat(2,1fr)}header h1{font-size:14px}.user span{display:none}th:nth-child(3),td:nth-child(3){display:none}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="config.js?v=9.0"></script>
 </head>
 <body>
 
 <section id="login" class="login">
 <div class="loginbox">
 <img src="logo.jpg"><h1>جمعية الخير للجميع</h1><p>نظام إدارة الحالات والمساعدات</p>
-<div class="field"><label>اسم المستخدم</label><input id="loginUser" value="Ahmedyosf"></div>
-<div class="field"><label>كلمة المرور</label><input id="loginPass" type="password" value="Ahmed8910@"></div><div class="field"><label>الاتصال السحابي</label><input id="apiUrl" placeholder="مثال: http://192.168.1.50:8000"></div>
+<div class="field"><label>اسم المستخدم</label><input id="loginUser" autocomplete="username" autocapitalize="none"></div>
+<div class="field"><label>كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password"></div><div class="field"><label>الاتصال السحابي</label><input id="apiUrl" placeholder="مثال: http://192.168.1.50:8000"></div>
 <button class="primary" style="width:100%" onclick="login()">دخول</button>
-<p style="font-size:11px;color:#777">حساب تجريبي: Ahmedyosf / Ahmed8910@</p>
+<button class="secondary" style="width:100%;margin-top:8px" onclick="testCloud()">اختبار الاتصال السحابي</button>
+<div id="cloudStatus" class="notice" style="margin-top:10px;text-align:right">الاتصال السحابي: لم يتم الاختبار بعد</div>
+
 </div></section>
 
 <section id="app" class="app">
@@ -48,6 +51,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
 <nav id="nav">
 <button class="active" onclick="page('home',this)">الرئيسية</button>
 <button onclick="page('cases',this)">الحالات</button>
+<button onclick="page('distributions',this)">كشوف التوزيع</button>
+<button onclick="page('memberships',this)">عضويات الجمعية</button>
+<button onclick="page('volunteers',this)">المتطوعون</button>
+<button onclick="page('donations',this)">التبرعات</button>
+<button onclick="page('minutes',this)">محاضر مجلس الإدارة</button>
 <button onclick="page('reports',this)">التقارير</button>
 <button onclick="page('users',this)">المستخدمون</button>
 <button onclick="page('backup',this)">النسخ الاحتياطي</button>
@@ -60,12 +68,32 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
 </section>
 
 <section id="cases" class="page">
-<div class="toolbar"><input id="q" placeholder="بحث بالاسم / رقم الحالة / الرقم القومي / الهاتف" oninput="renderCases()"><button class="primary" onclick="openCase()">+ حالة جديدة</button></div>
+<div class="toolbar"><input id="q" placeholder="بحث بالاسم / رقم الحالة / الرقم القومي / الهاتف" oninput="renderCases()"><button class="primary" onclick="openCase()">+ حالة جديدة</button><label class="secondary" style="padding:10px 13px;border-radius:10px;cursor:pointer">استيراد Excel للحالات <input type="file" hidden accept=".xlsx,.xls,.csv" onchange="importCasesExcel(this.files[0])"></label><button class="secondary" onclick="downloadCasesTemplate()">تحميل نموذج Excel</button></div>
 <div class="card"><div class="toolbar"><select id="nf" onchange="renderCases()"><option value="">كل الاحتياجات</option></select><select id="pf" onchange="renderCases()"><option value="">كل درجات الاحتياج</option><option>عاجل</option><option>متوسط</option><option>عادي</option></select><select id="ff" onchange="renderCases()"><option value="">كل الحالات</option><option value="1">تحتاج متابعة</option><option value="0">لا تحتاج متابعة</option></select></div><div id="caseTable"></div></div>
 </section>
 
+<section id="distributions" class="page">
+<div class="card"><div class="top"><h2>كشوف توزيع المساعدات للمستلمين</h2><button class="primary" onclick="addDistribution()">+ إضافة مستلم</button></div>
+<div class="toolbar"><input id="distSearch" placeholder="بحث بالاسم أو رقم الحالة أو نوع التوزيع" oninput="renderDistributions()"><input id="distDate" type="month" onchange="renderDistributions()"><button class="secondary" onclick="exportTable('distributions')">تصدير Excel/CSV</button><button class="secondary" onclick="printTable('distributions')">طباعة / حفظ PDF</button></div>
+<div class="notice">سجّل فقط الأشخاص الذين استلموا بالفعل، ويمكن طباعة الكشف أو اختيار «حفظ كـ PDF» من نافذة الطباعة.</div><div id="distributionTable"></div></div>
+</section>
+<section id="memberships" class="page">
+<div class="card"><div class="top"><h2>عضويات الجمعية</h2><button class="primary" onclick="addMembership()">+ تسجيل عضو</button></div><div class="toolbar"><input id="memberSearch" placeholder="بحث باسم العضو أو رقم العضوية أو الهاتف" oninput="renderMemberships()"><button class="secondary" onclick="exportTable('memberships')">تصدير Excel/CSV</button><button class="secondary" onclick="printTable('memberships')">طباعة / PDF</button></div><div id="membershipTable"></div></div>
+</section>
+<section id="volunteers" class="page">
+<div class="card"><div class="top"><h2>سجل المتطوعين</h2><button class="primary" onclick="addVolunteer()">+ تسجيل متطوع</button></div><div class="toolbar"><input id="volSearch" placeholder="بحث باسم المتطوع أو الهاتف أو المهارة" oninput="renderVolunteers()"><button class="secondary" onclick="exportTable('volunteers')">تصدير Excel/CSV</button><button class="secondary" onclick="printTable('volunteers')">طباعة / PDF</button></div><div id="volunteerTable"></div></div>
+</section>
+<section id="donations" class="page">
+<div class="card"><div class="top"><h2>سجل التبرعات</h2><button class="primary" onclick="addDonation()">+ تسجيل تبرع</button></div><div class="grid"><div class="stat"><span>إجمالي التبرعات النقدية</span><b id="donationTotal">0 ج.م</b></div><div class="stat"><span>عدد التبرعات</span><b id="donationCount">0</b></div></div><div class="toolbar"><input id="donSearch" placeholder="بحث باسم المتبرع أو نوع التبرع أو رقم الإيصال" oninput="renderDonations()"><input id="donMonth" type="month" onchange="renderDonations()"><button class="secondary" onclick="exportTable('donations')">تصدير Excel/CSV</button><button class="secondary" onclick="printTable('donations')">طباعة / PDF</button></div><div id="donationTable"></div></div>
+</section>
+<section id="minutes" class="page">
+<div class="card"><div class="top"><h2>سجل محاضر مجلس الإدارة</h2><label class="primary" style="padding:10px 13px;border-radius:10px;cursor:pointer">+ رفع محضر PDF <input type="file" hidden accept="application/pdf,.pdf" onchange="uploadBoardMinute(this.files[0]);this.value=''" /></label></div>
+<div class="toolbar"><input id="minuteSearch" placeholder="بحث بعنوان المحضر أو رقم الجلسة" oninput="renderMinutes()"><input id="minuteMonth" type="month" onchange="renderMinutes()"><button class="secondary" onclick="exportTable('minutes')">تصدير Excel/CSV</button><button class="secondary" onclick="printTable('minutes')">طباعة الكشف / PDF</button></div>
+<div class="notice">ارفع ملف PDF للمحضر ليُحفظ في التخزين السحابي، وسجّل عنوان الجلسة وتاريخها ورقمها. تأكد من أن صلاحيات تخزين المستندات مناسبة قبل رفع محاضر سرية.</div><div id="minutesTable"></div></div>
+</section>
 <section id="reports" class="page">
 <div class="grid"><div class="stat"><span>عدد الحالات</span><b id="rr1">0</b></div><div class="stat"><span>إجمالي أفراد الأسر</span><b id="rr2">0</b></div><div class="stat"><span>حالات علاج</span><b id="rr3">0</b></div><div class="stat"><span>حالات طارئة</span><b id="rr4">0</b></div></div>
+<div class="card"><h2>التقرير الشهري</h2><div class="toolbar"><label>الشهر <input id="reportMonth" type="month" onchange="renderReports()"></label><button class="secondary" onclick="printMonthlyReport()">طباعة التقرير</button></div><div class="grid"><div class="stat"><span>مساعدات الشهر</span><b id="monthlyAid">0 ج.م</b></div><div class="stat"><span>عدد المساعدات</span><b id="monthlyAidCount">0</b></div><div class="stat"><span>الحالات المستحقة/تحتاج متابعة</span><b id="eligibleCount">0</b></div></div><div id="monthlyDetails"></div></div>
 <div class="card"><h2>الحالات حسب الاحتياج</h2><div id="needReport"></div></div><div class="card"><h2>المساعدات حسب النوع</h2><div id="aidReport"></div></div>
 </section>
 
@@ -75,9 +103,9 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
 </section>
 
 <section id="backup" class="page">
-<div class="card"><h2>النسخ الاحتياطي</h2><div class="notice">هذه النسخة تعمل محليًا على الجهاز. قبل التشغيل المركزي سننقل البيانات إلى قاعدة بيانات مشتركة وآمنة.</div><div class="toolbar"><button class="primary" onclick="exportData()">⬇ تصدير البيانات</button><label class="secondary" style="padding:10px 13px;border-radius:10px;cursor:pointer">⬆ استيراد البيانات <input type="file" hidden accept=".json" onchange="importData(this.files[0])"></label></div></div>
+<div class="card"><h2>النسخ الاحتياطي السحابي</h2><div class="notice">يتم حفظ الحالات والمساعدات والمتابعات في قاعدة البيانات السحابية المشتركة. نزّل نسخة احتياطية دورية واحتفظ بها في مكان آمن؛ فهي تحتوي بيانات شخصية حساسة.</div><div class="toolbar"><button class="primary" onclick="exportData()">⬇ تنزيل نسخة احتياطية</button><button class="secondary" onclick="refreshFromCloud()">⟳ تحديث من السحابة</button><label class="secondary" style="padding:10px 13px;border-radius:10px;cursor:pointer">⬆ استعادة نسخة JSON <input type="file" hidden accept=".json" onchange="importData(this.files[0])"></label></div><div id="backupStatus" class="notice" style="margin-top:10px">آخر حفظ مرتبط بعملية التعديل.</div></div>
 </section>
-</main><footer>جمعية الخير للجميع — نسخة تجريبية متقدمة</footer>
+</main><footer>جمعية الخير للجميع — الإصدار 8.0 السحابي</footer>
 </section>
 
 <div id="caseModal" class="modal hidden"><div class="box">
@@ -111,48 +139,86 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:25px}
 const NEEDS=['مساعدة مالية','مواد غذائية','علاج','أدوية','إيجار','كهرباء / مياه','تعليم','ملابس','تجهيز منزل','أجهزة','مساعدة شهرية','حالة طارئة','أخرى'];
 const ROLES=['مدير النظام','باحث اجتماعي','محاسب','متطوع'];
 let cases=[];
+let distributions=[], memberships=[], volunteers=[], donations=[], boardMinutes=[];
 let users=[
-{id:'1',name:'مدير الجمعية',username:'Ahmedyosf',role:'مدير النظام',active:true},
+{id:'1',name:'مدير الجمعية',username:'admin',role:'مدير النظام',active:true},
 {id:'2',name:'باحث اجتماعي',username:'researcher',role:'باحث اجتماعي',active:true},
 {id:'3',name:'المحاسب',username:'accountant',role:'محاسب',active:true}];
 let current=null, session=null;
 const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const sb = window.supabase.createClient(window.JKH_SUPABASE_URL, window.JKH_SUPABASE_ANON_KEY);
+let sb;
+try {
+  if(!window.supabase) throw new Error('مكتبة Supabase لم يتم تحميلها. تأكد من وجود اتصال بالإنترنت.');
+  sb = window.supabase.createClient(window.JKH_SUPABASE_URL, window.JKH_SUPABASE_ANON_KEY);
+} catch(e) {
+  console.error(e);
+}
 $('apiUrl').value = 'سحابي — لا يحتاج Wi‑Fi مشترك';
+function showCloudStatus(msg, ok=false){
+  const el=$('cloudStatus');
+  if(!el) return;
+  el.textContent=msg;
+  el.className=ok?'success':'notice';
+}
+function errorText(e){
+  if(!e) return 'خطأ غير معروف';
+  return [e.message,e.code?('Code: '+e.code):'',e.details?('Details: '+e.details):'',e.hint?('Hint: '+e.hint):''].filter(Boolean).join(' — ');
+}
+async function testCloud(){
+  try{
+    if(!sb) throw new Error('مكتبة Supabase غير متاحة. افتح النسخة من جديد مع اتصال بالإنترنت.');
+    const {data,error}=await sb.from('app_state').select('id').eq('id',1).single();
+    if(error) throw error;
+    showCloudStatus('الاتصال السحابي يعمل بنجاح ✓',true);
+    alert('الاتصال بالسحابة ناجح.');
+  }catch(e){
+    console.error(e);
+    showCloudStatus('فشل الاتصال: '+errorText(e),false);
+    alert('فشل الاتصال السحابي:\n'+errorText(e));
+  }
+}
 async function loadCentral(){
   const {data,error}=await sb.from('app_state').select('payload').eq('id',1).single();
   if(error) throw error;
   const s=data?.payload||{};
-  cases=s.cases||[]; users=s.users||[]; renderAll();
+  cases=(s.cases||[]).map(c=>({...c,family:c.family||[],aid:c.aid||[],docs:c.docs||[],visits:c.visits||[],needs:c.needs||[]})); users=s.users||[]; distributions=s.distributions||[]; memberships=s.memberships||[]; volunteers=s.volunteers||[]; donations=s.donations||[]; boardMinutes=s.boardMinutes||[]; renderAll();
 }
 let saveTimer=null;
 function save(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    const {error}=await sb.from('app_state').upsert({id:1,payload:{version:5,cases,users},updated_at:new Date().toISOString()});
-    if(error) alert('تعذر حفظ البيانات سحابيًا: '+error.message);
+    const {error}=await sb.from('app_state').upsert({id:1,payload:{version:10,cases,users,distributions,memberships,volunteers,donations,boardMinutes},updated_at:new Date().toISOString()});
+    if(error) alert('تعذر حفظ البيانات سحابيًا: '+error.message); else if($('backupStatus')) $('backupStatus').textContent='آخر حفظ سحابي ناجح: '+new Date().toLocaleString('ar-EG');
   },250);
 }
 async function login(){
   const u=$('loginUser').value.trim(), p=$('loginPass').value;
   try{
+    if(!sb) throw new Error('مكتبة Supabase غير متاحة. افتح النسخة مع اتصال بالإنترنت.');
+    showCloudStatus('جاري التحقق من الاتصال وتسجيل الدخول…',true);
     const {data,error}=await sb.rpc('login_staff',{p_username:u,p_password:p});
-    if(error || !data?.user) throw new Error('بيانات الدخول غير صحيحة');
+    if(error) throw error;
+    if(!data?.user) throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة.');
     session=data.user;
+    await loadCentral();
     $('login').style.display='none'; $('app').classList.add('show');
     $('who').textContent=session.name+' — '+session.role;
     $('avatar').textContent=session.name[0]||'م';
-    await loadCentral();
-  }catch(e){alert(e.message||'تعذر تسجيل الدخول. تأكد من إعداد قاعدة البيانات.')}
+  }catch(e){
+    console.error('Login error:',e);
+    showCloudStatus('خطأ: '+errorText(e),false);
+    alert('تعذر تسجيل الدخول:\n'+errorText(e));
+  }
 }
 async function logout(){await sb.auth.signOut().catch(()=>{});session=null;$('app').classList.remove('show');$('login').style.display='flex'}
-function page(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='cases')renderCases();if(id==='reports')renderReports();if(id==='users')renderUsers()}
+function page(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='cases')renderCases();if(id==='reports')renderReports();if(id==='users')renderUsers();if(id==='distributions')renderDistributions();if(id==='memberships')renderMemberships();if(id==='volunteers')renderVolunteers();if(id==='donations')renderDonations();if(id==='minutes')renderMinutes()}
 function closeM(id){$(id).classList.add('hidden')}
 function nextNo(){return String(cases.length?Math.max(...cases.map(c=>+c.no||0))+1:1).padStart(6,'0')}
 function initChecks(sel=[]){$('needsChecks').innerHTML=NEEDS.map(n=>`<label class="check"><input type="checkbox" value="${n}" ${sel.includes(n)?'checked':''}> ${n}</label>`).join('')}
 function openCase(c=null){$('caseModal').classList.remove('hidden');$('ctitle').textContent=c?'تعديل حالة':'إضافة حالة';$('cid').value=c?.id||'';for(let k of ['name','nid','birth','phone','wa','area','members','address','income','notes'])$(k).value=c?.[k]??(k==='members'?1:'');$('social').value=c?.social||'متزوج';$('priority').value=c?.priority||'عادي';$('status').value=c?.status||'نشطة';initChecks(c?.needs||[])}
 function saveCase(e){e.preventDefault();let id=$('cid').value,c=id?cases.find(x=>x.id===id):null,o={id:id||crypto.randomUUID(),no:c?.no||nextNo(),name:$('name').value.trim(),nid:$('nid').value.trim(),birth:$('birth').value,social:$('social').value,phone:$('phone').value.trim(),wa:$('wa').value.trim(),area:$('area').value.trim(),members:+$('members').value||1,address:$('address').value.trim(),income:$('income').value.trim(),needs:[...document.querySelectorAll('#needsChecks input:checked')].map(x=>x.value),priority:$('priority').value,status:$('status').value,notes:$('notes').value.trim(),created:c?.created||new Date().toISOString(),follow:c?.follow||false,family:c?.family||[],aid:c?.aid||[],docs:c?.docs||[],visits:c?.visits||[]};if(c)Object.assign(c,o);else cases.unshift(o);save();closeM('caseModal');renderAll()}
-function renderCases(){let q=($('q').value||'').toLowerCase(),n=$('nf').value,p=$('pf').value,f=$('ff').value;let a=cases.filter(c=>([c.name,c.no,c.nid,c.phone,c.wa].join(' ').toLowerCase().includes(q))&&(!n||c.needs.includes(n))&&(!p||c.priority===p)&&(f===''||String(c.follow?1:0)===f));$('caseTable').innerHTML=a.length?`<table><thead><tr><th>رقم</th><th>الحالة</th><th>التواصل</th><th>الأفراد</th><th>الاحتياج</th><th></th></tr></thead><tbody>${a.map(c=>`<tr><td>${c.no}</td><td><b>${esc(c.name)}</b><br><span class="badge ${c.priority==='عاجل'?'r':c.priority==='متوسط'?'o':''}">${c.priority}</span> <span class="badge">${c.status}</span></td><td>${esc(c.phone||'-')}<br>${esc(c.wa||'')}</td><td>${c.members}</td><td>${c.needs.slice(0,2).map(x=>`<span class="badge">${esc(x)}</span>`).join('')}</td><td><button class="secondary" onclick="openDetail('${c.id}')">فتح الملف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد حالات.</div>'}
+function renderCases(){let q=($('q').value||'').toLowerCase(),n=$('nf').value,p=$('pf').value,f=$('ff').value;let a=cases.filter(c=>([c.name,c.no,c.nid,c.phone,c.wa].join(' ').toLowerCase().includes(q))&&(!n||c.needs.includes(n))&&(!p||c.priority===p)&&(f===''||String(c.follow?1:0)===f));$('caseTable').innerHTML=a.length?`<table><thead><tr><th>رقم</th><th>الحالة</th><th>التواصل</th><th>الأفراد</th><th>الاحتياج</th><th>الإجراءات</th></tr></thead><tbody>${a.map(c=>`<tr><td>${c.no}</td><td><b>${esc(c.name)}</b><br><span class="badge ${c.priority==='عاجل'?'r':c.priority==='متوسط'?'o':''}">${c.priority}</span> <span class="badge">${c.status}</span></td><td>${esc(c.phone||'-')}<br>${esc(c.wa||'')}</td><td>${c.members}</td><td>${c.needs.slice(0,2).map(x=>`<span class="badge">${esc(x)}</span>`).join('')}</td><td><button class="secondary" onclick="openDetail('${c.id}')">فتح الملف</button> <button class="danger" onclick="deleteCase('${c.id}')">حذف الحالة</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد حالات.</div>'}
+async function deleteCase(id){const c=cases.find(x=>x.id===id);if(!c)return;if(!confirm('تأكيد حذف الحالة '+c.name+' رقم '+c.no+'؟ سيتم حذف سجل الحالة وما يرتبط به من بيانات داخل النظام، ولا يمكن التراجع عن الحذف.'))return;cases=cases.filter(x=>x.id!==id);if(current&&current.id===id){current=null;closeM('detailModal')}try{await saveNow();renderAll();alert('تم حذف الحالة وحفظ التغيير سحابيًا.')}catch(e){alert('تعذر حفظ الحذف سحابيًا: '+errorText(e));}}
 function quickSearch(){let q=$('quick').value.toLowerCase().trim();if(!q){$('quickResult').innerHTML='';return}let a=cases.filter(c=>[c.name,c.no,c.nid,c.phone,c.wa].join(' ').toLowerCase().includes(q)).slice(0,8);$('quickResult').innerHTML=a.map(c=>`<div class="row"><div><b>${esc(c.name)}</b><br><small>الحالة ${c.no} — ${esc(c.area||'')}</small></div><button class="secondary" onclick="openDetail('${c.id}')">فتح</button></div>`).join('')||'<div class="empty">لا توجد نتيجة.</div>'}
 function openDetail(id){current=cases.find(c=>c.id===id);if(!current)return;$('detailModal').classList.remove('hidden');$('dn').textContent=current.name;$('dno').textContent='رقم الحالة '+current.no;renderDetail();dt('data',document.querySelector('#dtabs button'))}
 function renderDetail(){
@@ -161,7 +227,7 @@ $('family').innerHTML=`<div class="card"><h2>أفراد الأسرة (${current.
 $('needs').innerHTML=`<div class="card"><h2>الاحتياجات</h2>${current.needs.map(x=>`<span class="badge">${esc(x)}</span>`).join('')||'لا توجد'}<p>الأولوية: <span class="badge ${current.priority==='عاجل'?'r':current.priority==='متوسط'?'o':''}">${current.priority}</span></p></div>`;
 $('aid').innerHTML=`<div class="card"><h2>سجل المساعدات</h2>${current.aid.map((a,i)=>`<div class="row"><div><b>${esc(a.type)}</b> — ${(+a.amount||0).toLocaleString('ar-EG')} ج.م<br><small>${esc(a.date)} — ${esc(a.by||'')}</small></div><button class="danger" onclick="removeAid(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد مساعدات.</div>'}<button class="primary" onclick="openAid()">+ تسجيل مساعدة</button></div>`;
 $('docs').innerHTML=`<div class="card"><h2>المستندات</h2><input id="docFile" type="file" accept="image/*,.pdf"><button class="primary" style="margin-top:8px" onclick="addDoc()">رفع المستند</button>${current.docs.map((d,i)=>`<div class="row"><div><b>${esc(d.name)}</b><br><small>${esc(d.type)} — ${esc(d.date)}</small></div><div>${d.url?`<a class="secondary" style="padding:8px 10px;border-radius:8px;text-decoration:none" target="_blank" href="${esc(d.url)}">فتح</a>`:''}<button class="danger" onclick="removeDoc(${i})">حذف</button></div></div>`).join('')||'<div class="empty">لا توجد مستندات.</div>'}</div>`;
-$('visits').innerHTML=`<div class="card"><h2>الزيارات والبحث الاجتماعي</h2>${current.visits.map((v,i)=>`<div class="row"><div><b>${esc(v.date)}</b> — ${esc(v.by||'')}<br>${esc(v.note)}</div><button class="danger" onclick="removeVisit(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد زيارات.</div>'}<button class="primary" onclick="addVisit()">+ تسجيل زيارة</button></div>`}
+$('visits').innerHTML=`<div class="card"><h2>الزيارات والبحث الاجتماعي</h2>${current.visits.map((v,i)=>`<div class="row"><div><b>${esc(v.date)}</b> — ${esc(v.kind||'زيارة')} — ${esc(v.by||'')}<br>${esc(v.note)}${v.next?`<br><small>المتابعة القادمة: ${esc(v.next)}</small>`:''}</div><button class="danger" onclick="removeVisit(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد زيارات.</div>'}<button class="primary" onclick="addVisit()">+ تسجيل زيارة</button></div>`}
 function dt(id,btn){['data','family','needs','aid','docs','visits'].forEach(x=>$(x).classList.toggle('hidden',x!==id));document.querySelectorAll('#dtabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
 function toggleFollow(){current.follow=!current.follow;save();renderDetail();renderAll()}
 function addFamily(){let name=prompt('اسم الفرد؟');if(!name)return;current.family.push({name,relation:prompt('صلة القرابة؟','ابن/ابنة'),age:prompt('العمر؟',''),status:prompt('الحالة؟','')});save();renderDetail()}
@@ -183,18 +249,144 @@ async function addDoc(){
   }catch(e){alert('فشل رفع المستند: '+e.message)}
 }
 function removeDoc(i){current.docs.splice(i,1);save();renderDetail()}
-function addVisit(){let note=prompt('ملخص الزيارة / البحث الاجتماعي؟');if(!note)return;current.visits.unshift({date:new Date().toLocaleDateString('ar-EG'),by:session?.name||'',note});save();renderDetail()}
+function addVisit(){
+ const kind=prompt('نوع المتابعة: اكتب زيارة أو مكالمة أو بحث اجتماعي','زيارة');if(!kind)return;
+ const note=prompt('ملخص المتابعة ونتيجتها؟');if(!note)return;
+ const date=prompt('التاريخ (YYYY-MM-DD)',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const next=prompt('موعد المتابعة القادمة (اختياري YYYY-MM-DD)','')||'';
+ current.visits.unshift({kind,date,by:session?.name||'',note,result:note,next});save();renderDetail()
+}
 function removeVisit(i){current.visits.splice(i,1);save();renderDetail()}
-function renderReports(){let n={},a={};cases.forEach(c=>c.needs.forEach(x=>n[x]=(n[x]||0)+1));cases.forEach(c=>c.aid.forEach(x=>a[x.type]=(a[x.type]||0)+(+x.amount||0)));$('rr1').textContent=cases.length;$('rr2').textContent=cases.reduce((s,c)=>s+c.members,0);$('rr3').textContent=cases.filter(c=>c.needs.includes('علاج')||c.needs.includes('أدوية')).length;$('rr4').textContent=cases.filter(c=>c.needs.includes('حالة طارئة')).length;$('needReport').innerHTML=Object.entries(n).sort((a,b)=>b[1]-a[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1]} حالة</span></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';$('aidReport').innerHTML=Object.entries(a).sort((x,y)=>y[1]-x[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1].toLocaleString('ar-EG')} ج.م</span></div>`).join('')||'<div class="empty">لا توجد مساعدات.</div>'}
+function renderReports(){let n={},a={};cases.forEach(c=>(c.needs||[]).forEach(x=>n[x]=(n[x]||0)+1));cases.forEach(c=>(c.aid||[]).forEach(x=>a[x.type]=(a[x.type]||0)+(+x.amount||0)));$('rr1').textContent=cases.length;$('rr2').textContent=cases.reduce((s,c)=>s+(+c.members||0),0);$('rr3').textContent=cases.filter(c=>(c.needs||[]).includes('علاج')||(c.needs||[]).includes('أدوية')).length;$('rr4').textContent=cases.filter(c=>(c.needs||[]).includes('حالة طارئة')).length;$('needReport').innerHTML=Object.entries(n).sort((a,b)=>b[1]-a[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1]} حالة</span></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';$('aidReport').innerHTML=Object.entries(a).sort((x,y)=>y[1]-x[1]).map(x=>`<div class="row"><b>${esc(x[0])}</b><span class="badge">${x[1].toLocaleString('ar-EG')} ج.م</span></div>`).join('')||'<div class="empty">لا توجد مساعدات.</div>';const month=$('reportMonth')?.value||new Date().toISOString().slice(0,7);if($('reportMonth')&&!$('reportMonth').value)$('reportMonth').value=month;const items=[];cases.forEach(c=>(c.aid||[]).forEach(aid=>{if(String(aid.date||'').slice(0,7)===month)items.push({caseNo:c.no,name:c.name,...aid})}));$('monthlyAid').textContent=items.reduce((sum,x)=>sum+(+x.amount||0),0).toLocaleString('ar-EG')+' ج.م';$('monthlyAidCount').textContent=items.length;$('eligibleCount').textContent=cases.filter(c=>c.status!=='مغلقة'&&(c.follow||c.priority==='عاجل'||c.status==='تحت الدراسة')).length;$('monthlyDetails').innerHTML=items.length?items.map(x=>`<div class="row"><div><b>${esc(x.type)}</b> — ${esc(x.name)} (رقم ${esc(x.caseNo)})<br><small>${esc(x.date)} — ${(+x.amount||0).toLocaleString('ar-EG')} ج.م</small></div></div>`).join(''):'<div class="empty">لا توجد مساعدات مسجلة لهذا الشهر.</div>'}
+function printMonthlyReport(){renderReports();const month=$('reportMonth').value;const content=$('monthlyDetails').innerHTML;const w=window.open('','_blank');if(!w)return alert('اسمح بفتح نافذة الطباعة.');w.document.write(`<html dir="rtl"><meta charset="utf-8"><title>تقرير المساعدات الشهري</title><body style="font-family:Tahoma;padding:24px"><h1>جمعية الخير للجميع</h1><h2>تقرير المساعدات — ${esc(month)}</h2><p>إجمالي المساعدات: ${esc($('monthlyAid').textContent)} | عدد المساعدات: ${esc($('monthlyAidCount').textContent)}</p>${content}</body></html>`);w.document.close();w.print()}
 function renderUsers(){$('usersList').innerHTML=users.map((u,i)=>`<div class="row"><div><b>${esc(u.name)}</b><br><small>${esc(u.username)} — ${esc(u.role)}</small></div><span>${u.active?'<span class="badge">نشط</span>':'<span class="badge r">موقوف</span>'}</span><button class="secondary" onclick="toggleUser(${i})">${u.active?'إيقاف':'تفعيل'}</button></div>`).join('')}
 function addUser(){let name=prompt('اسم المستخدم؟');if(!name)return;let username=prompt('اسم الدخول؟');if(!username)return;let role=prompt('الدور: مدير النظام / باحث اجتماعي / محاسب / متطوع','متطوع');if(!ROLES.includes(role))role='متطوع';users.push({id:crypto.randomUUID(),name,username,role,active:true});save();renderUsers()}
 function toggleUser(i){users[i].active=!users[i].active;save();renderUsers()}
 function updateStats(){$('st').textContent=cases.length;$('sf').textContent=cases.filter(c=>c.follow).length;$('su').textContent=cases.filter(c=>c.priority==='عاجل').length;$('sm').textContent=cases.reduce((s,c)=>s+c.aid.reduce((x,a)=>x+(+a.amount||0),0),0).toLocaleString('ar-EG')+' ج.م'}
 function renderLatest(){$('latest').innerHTML=cases.slice(0,7).map(c=>`<div class="row"><div><b>${esc(c.name)}</b><br><small>الحالة ${c.no} — ${esc(c.area||'')}</small></div><button class="secondary" onclick="openDetail('${c.id}')">فتح</button></div>`).join('')||'<div class="empty">لا توجد حالات.</div>'}
-function renderAll(){updateStats();renderLatest();$('nf').innerHTML='<option value="">كل الاحتياجات</option>'+NEEDS.map(x=>`<option>${x}</option>`).join('');renderCases();renderReports();renderUsers()}
-function exportData(){let payload={version:3,exportedAt:new Date().toISOString(),cases,users};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download='جمعية_الخير_للجميع_نسخة_احتياطية.json';a.click()}
-function importData(f){if(!f)return;let r=new FileReader();r.onload=()=>{try{let p=JSON.parse(r.result);if(!Array.isArray(p.cases))throw 0;if(confirm('استبدال البيانات الحالية؟')){cases=p.cases;users=p.users||users;save();renderAll();alert('تم الاستيراد')}}catch(e){alert('ملف غير صالح')}};r.readAsText(f)}
+function renderAll(){updateStats();renderLatest();$('nf').innerHTML='<option value="">كل الاحتياجات</option>'+NEEDS.map(x=>`<option>${x}</option>`).join('');renderCases();renderReports();renderUsers();renderDistributions();renderMemberships();renderVolunteers();renderDonations();renderMinutes()}
+function exportData(){const payload={version:10,exportedAt:new Date().toISOString(),source:'جمعية الخير للجميع',cases,users,distributions,memberships,volunteers,donations,boardMinutes};const a=document.createElement('a');const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.href=url;a.download='جمعية_الخير_للجميع_نسخة_احتياطية_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);if($('backupStatus'))$('backupStatus').textContent='تم إنشاء ملف النسخة الاحتياطية على هذا الجهاز: '+new Date().toLocaleString('ar-EG')}
+async function refreshFromCloud(){try{await loadCentral();if($('backupStatus'))$('backupStatus').textContent='تم تحديث البيانات من السحابة بنجاح '+new Date().toLocaleString('ar-EG');alert('تم تحديث البيانات من السحابة.')}catch(e){alert('تعذر التحديث من السحابة: '+errorText(e))}}
+function importData(f){if(!f)return;const r=new FileReader();r.onload=async()=>{try{const p=JSON.parse(r.result);if(!Array.isArray(p.cases))throw new Error('الملف لا يحتوي قائمة الحالات المطلوبة');if(!confirm('سيتم استبدال بيانات النظام الحالية بالنسخة المختارة. هل تريد المتابعة؟'))return;cases=p.cases.map(c=>({...c,family:c.family||[],aid:c.aid||[],docs:c.docs||[],visits:c.visits||[],needs:c.needs||[]}));users=Array.isArray(p.users)?p.users:users;distributions=Array.isArray(p.distributions)?p.distributions:[];memberships=Array.isArray(p.memberships)?p.memberships:[];volunteers=Array.isArray(p.volunteers)?p.volunteers:[];donations=Array.isArray(p.donations)?p.donations:[];boardMinutes=Array.isArray(p.boardMinutes)?p.boardMinutes:[];await saveNow();renderAll();alert('تم استيراد البيانات وحفظها سحابيًا.')}catch(e){alert('فشل الاستيراد: '+e.message)}};r.readAsText(f)}
+async function saveNow(){if(!sb)throw new Error('لا يوجد اتصال بقاعدة البيانات');const {error}=await sb.from('app_state').upsert({id:1,payload:{version:10,cases,users,distributions,memberships,volunteers,donations,boardMinutes},updated_at:new Date().toISOString()});if(error)throw error}
 function printCase(){let w=window.open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:25px"><h1 style="color:#18864b">جمعية الخير للجميع</h1><h2>ملف الحالة رقم ${current.no}</h2><table border="1" cellpadding="8" cellspacing="0" width="100%">${[['الاسم',current.name],['الرقم القومي',current.nid],['الهاتف',current.phone],['الواتساب',current.wa],['العنوان',current.address],['المنطقة',current.area],['عدد الأفراد',current.members],['الحالة الاجتماعية',current.social],['الاحتياجات',current.needs.join('، ')],['الأولوية',current.priority],['الحالة',current.status],['الملاحظات',current.notes]].map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</table></body></html>`);w.document.close();w.print()}
 initChecks();
+
+function addDistribution(){
+ const name=prompt('اسم المستلم كما في الكشف؟'); if(!name)return;
+ const caseNo=prompt('رقم الحالة (اختياري)؟','')||'';
+ const type=prompt('نوع التوزيع؟','مواد غذائية')||'مساعدة';
+ const qty=prompt('الكمية / القيمة؟','1')||'1';
+ const date=prompt('تاريخ الاستلام YYYY-MM-DD؟',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const receipt=prompt('رقم الإيصال أو التوقيع (اختياري)','')||'';
+ distributions.unshift({id:crypto.randomUUID(),name,caseNo,type,qty,date,receipt,by:session?.name||''});save();renderDistributions();
+}
+function renderDistributions(){
+ const q=($('distSearch')?.value||'').toLowerCase(),m=$('distDate')?.value||'';
+ const a=distributions.filter(x=>([x.name,x.caseNo,x.type,x.receipt].join(' ').toLowerCase().includes(q))&&(!m||String(x.date).slice(0,7)===m));
+ $('distributionTable').innerHTML=a.length?`<table><thead><tr><th>التاريخ</th><th>المستلم</th><th>رقم الحالة</th><th>نوع التوزيع</th><th>الكمية/القيمة</th><th>إيصال/توقيع</th><th></th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.name)}</td><td>${esc(x.caseNo||'-')}</td><td>${esc(x.type)}</td><td>${esc(x.qty)}</td><td>${esc(x.receipt||'-')}</td><td><button class="danger" onclick="deleteRecord('distributions','${x.id}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد سجلات توزيع.</div>';
+}
+function addMembership(){
+ const name=prompt('اسم العضو؟');if(!name)return;
+ const phone=prompt('الهاتف؟','')||'', nid=prompt('الرقم القومي؟','')||'';
+ const type=prompt('نوع العضوية؟','عضو عامل')||'عضو';
+ const date=prompt('تاريخ الانضمام YYYY-MM-DD؟',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const fee=prompt('رسوم العضوية (جنيه)؟','0')||'0';
+ memberships.unshift({id:crypto.randomUUID(),no:'M'+String(memberships.length+1).padStart(5,'0'),name,phone,nid,type,date,fee:+fee,status:'نشط'});save();renderMemberships();
+}
+function renderMemberships(){
+ const q=($('memberSearch')?.value||'').toLowerCase(),a=memberships.filter(x=>[x.name,x.no,x.phone,x.nid,x.type].join(' ').toLowerCase().includes(q));
+ $('membershipTable').innerHTML=a.length?`<table><thead><tr><th>رقم العضوية</th><th>الاسم</th><th>الهاتف</th><th>النوع</th><th>تاريخ الانضمام</th><th>الرسوم</th><th></th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.no)}</td><td>${esc(x.name)}</td><td>${esc(x.phone||'-')}</td><td>${esc(x.type)}</td><td>${esc(x.date)}</td><td>${(+x.fee||0).toLocaleString('ar-EG')} ج.م</td><td><button class="danger" onclick="deleteRecord('memberships','${x.id}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد عضويات مسجلة.</div>';
+}
+function addVolunteer(){
+ const name=prompt('اسم المتطوع؟');if(!name)return;
+ const phone=prompt('الهاتف؟','')||'', skill=prompt('المهارة / مجال التطوع؟','قوافل ومبادرات')||'';
+ const date=prompt('تاريخ الانضمام YYYY-MM-DD؟',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const availability=prompt('حالة المتطوع؟','نشط')||'نشط';
+ volunteers.unshift({id:crypto.randomUUID(),no:'V'+String(volunteers.length+1).padStart(5,'0'),name,phone,skill,date,availability});save();renderVolunteers();
+}
+function renderVolunteers(){
+ const q=($('volSearch')?.value||'').toLowerCase(),a=volunteers.filter(x=>[x.name,x.phone,x.skill,x.no].join(' ').toLowerCase().includes(q));
+ $('volunteerTable').innerHTML=a.length?`<table><thead><tr><th>رقم</th><th>اسم المتطوع</th><th>الهاتف</th><th>المهارة</th><th>تاريخ الانضمام</th><th>الحالة</th><th></th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.no)}</td><td>${esc(x.name)}</td><td>${esc(x.phone||'-')}</td><td>${esc(x.skill||'-')}</td><td>${esc(x.date)}</td><td>${esc(x.availability)}</td><td><button class="danger" onclick="deleteRecord('volunteers','${x.id}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا يوجد متطوعون مسجلون.</div>';
+}
+function addDonation(){
+ const donor=prompt('اسم المتبرع؟');if(!donor)return;
+ const kind=prompt('نوع التبرع (نقدي/عيني)؟','نقدي')||'نقدي';
+ const amount=prompt('القيمة بالجنيه (للتبرع العيني اكتب 0)؟','0')||'0';
+ const description=prompt('وصف التبرع / المواد؟','')||'';
+ const date=prompt('تاريخ التبرع YYYY-MM-DD؟',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const receipt=prompt('رقم الإيصال؟','')||'';
+ donations.unshift({id:crypto.randomUUID(),no:'D'+String(donations.length+1).padStart(6,'0'),donor,kind,amount:+amount,description,date,receipt,by:session?.name||''});save();renderDonations();
+}
+function renderDonations(){
+ const q=($('donSearch')?.value||'').toLowerCase(),m=$('donMonth')?.value||'';
+ const a=donations.filter(x=>[x.donor,x.kind,x.description,x.receipt,x.no].join(' ').toLowerCase().includes(q)&&(!m||String(x.date).slice(0,7)===m));
+ $('donationTotal').textContent=a.reduce((sum,x)=>sum+(+x.amount||0),0).toLocaleString('ar-EG')+' ج.م';$('donationCount').textContent=a.length;
+ $('donationTable').innerHTML=a.length?`<table><thead><tr><th>رقم الإيصال</th><th>المتبرع</th><th>النوع</th><th>الوصف</th><th>القيمة</th><th>التاريخ</th><th></th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.receipt||x.no)}</td><td>${esc(x.donor)}</td><td>${esc(x.kind)}</td><td>${esc(x.description||'-')}</td><td>${(+x.amount||0).toLocaleString('ar-EG')} ج.م</td><td>${esc(x.date)}</td><td><button class="danger" onclick="deleteRecord('donations','${x.id}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد تبرعات مسجلة.</div>';
+}
+function deleteRecord(group,id){if(!confirm('هل تريد حذف السجل؟'))return;({distributions,memberships,volunteers,donations}[group]).splice(({distributions,memberships,volunteers,donations}[group]).findIndex(x=>x.id===id),1);save();({distributions:renderDistributions,memberships:renderMemberships,volunteers:renderVolunteers,donations:renderDonations}[group])();}
+function tableRows(group){
+ const maps={distributions:{title:'كشوف التوزيع',rows:distributions,cols:['date','name','caseNo','type','qty','receipt']},memberships:{title:'عضويات الجمعية',rows:memberships,cols:['no','name','phone','nid','type','date','fee','status']},volunteers:{title:'سجل المتطوعين',rows:volunteers,cols:['no','name','phone','skill','date','availability']},donations:{title:'سجل التبرعات',rows:donations,cols:['no','donor','kind','description','amount','date','receipt']},minutes:{title:'محاضر مجلس الإدارة',rows:boardMinutes,cols:['meetingNo','title','date','notes','fileName','url']}};
+ return maps[group];
+}
+function exportTable(group){
+ const t=tableRows(group),data=[t.cols,...t.rows.map(r=>t.cols.map(c=>r[c]??''))];
+ const csv='\ufeff'+data.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=t.title+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function printTable(group){
+ const t=tableRows(group),head=t.cols.map(c=>`<th>${esc(c)}</th>`).join(''),rows=t.rows.map(r=>`<tr>${t.cols.map(c=>`<td>${c==='url'&&r[c]?`<a href="${esc(r[c])}">فتح ملف PDF</a>`:esc(r[c]??'')}</td>`).join('')}</tr>`).join('');
+ const logo=new URL('logo.jpg',location.href).href;
+ const w=window.open('','_blank');if(!w)return alert('اسمح بفتح نافذة الطباعة.');
+ w.document.write(`<html dir="rtl"><meta charset="utf-8"><title>${esc(t.title)}</title><style>@page{margin:6.2cm 1.2cm 1.2cm}body{font-family:Tahoma,Arial;padding:0;color:#222}.letterhead{position:fixed;top:-5.1cm;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #555;padding-bottom:8px;margin-bottom:15px;page-break-inside:avoid}.letterhead img{width:5cm;height:5cm;object-fit:contain;flex:none}.org{text-align:right;font-size:17px;font-weight:bold;line-height:1.8}h2{text-align:center;font-size:18px;margin:12px 0}table{border-collapse:collapse;width:100%;font-size:11px}thead{display:table-header-group}tr{page-break-inside:avoid}th,td{border:1px solid #999;padding:7px;text-align:right;vertical-align:top}th{background:#eee}a{color:#111;text-decoration:none}@media print{.letterhead{break-inside:avoid;position:fixed;top:-5.1cm;left:0;right:0}}</style><div class="letterhead"><img src="${logo}"><div class="org">جمعية الخير للجميع<br>بني سويف<br>المشهرة برقم 2069 لسنة 2018</div></div><h2>${esc(t.title)}</h2><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table><p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p></html>`);w.document.close();w.onload=()=>w.print();
+}
+async function uploadBoardMinute(file){
+ if(!file)return;
+ if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){alert('من فضلك اختر ملف PDF فقط.');return;}
+ const title=prompt('عنوان المحضر؟');if(!title)return;
+ const meetingNo=prompt('رقم الجلسة / المحضر؟','')||'';
+ const date=prompt('تاريخ الجلسة YYYY-MM-DD؟',new Date().toISOString().slice(0,10))||new Date().toISOString().slice(0,10);
+ const notes=prompt('ملاحظات مختصرة (اختياري)؟','')||'';
+ try{
+  if(!sb)throw new Error('الاتصال السحابي غير متاح.');
+  const safe=file.name.replace(/[^\w.\-\u0600-\u06FF]/g,'_');
+  const path=`board-minutes/${Date.now()}_${safe}`;
+  const {data,error}=await sb.storage.from('case-documents').upload(path,file,{contentType:'application/pdf',upsert:false});
+  if(error)throw error;
+  const {data:pub}=sb.storage.from('case-documents').getPublicUrl(data.path);
+  boardMinutes.unshift({id:crypto.randomUUID(),meetingNo,title,date,notes,fileName:file.name,path:data.path,url:pub.publicUrl,uploadedAt:new Date().toISOString()});
+  await saveNow();renderMinutes();alert('تم رفع المحضر وتسجيله.');
+ }catch(e){alert('تعذر رفع المحضر: '+(e.message||e)+' — تأكد من صلاحيات Storage في Supabase.');}
+}
+function renderMinutes(){
+ const el=$('minutesTable');if(!el)return;
+ const q=($('minuteSearch')?.value||'').toLowerCase(),m=$('minuteMonth')?.value||'';
+ const rows=boardMinutes.filter(x=>[x.meetingNo,x.title,x.notes,x.fileName].join(' ').toLowerCase().includes(q)&&(!m||String(x.date).slice(0,7)===m));
+ el.innerHTML=rows.length?`<table><thead><tr><th>رقم الجلسة</th><th>عنوان المحضر</th><th>التاريخ</th><th>ملاحظات</th><th>الملف</th><th></th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.meetingNo||'-')}</td><td>${esc(x.title)}</td><td>${esc(x.date)}</td><td>${esc(x.notes||'-')}</td><td><a target="_blank" rel="noopener" href="${esc(x.url)}">فتح PDF</a></td><td><button class="danger" onclick="deleteMinute('${x.id}')">حذف السجل</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">لا توجد محاضر مسجلة.</div>';
+}
+async function deleteMinute(id){if(!confirm('حذف سجل المحضر؟ لن يُحذف الملف السحابي تلقائيًا.'))return;boardMinutes=boardMinutes.filter(x=>x.id!==id);await saveNow();renderMinutes();}
+function downloadCasesTemplate(){
+ const rows=[['name','nid','phone','wa','area','members','address','income','social','priority','status','needs','notes']];
+ const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='نموذج_استيراد_الحالات.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+async function importCasesExcel(file){
+ if(!file)return;
+ try{
+  if(!window.XLSX)throw new Error('مكتبة قراءة Excel لم تُحمّل؛ تحقق من الإنترنت أو استخدم CSV.');
+  const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+  if(!rows.length)throw new Error('الملف فارغ. استخدم نموذج الاستيراد وأضف صفوف الحالات تحته.');
+  const norm=k=>String(k).trim().toLowerCase();
+  const aliases={name:['name','الاسم','اسم الحالة','اسم المستفيد'],nid:['nid','الرقم القومي','رقم قومي'],phone:['phone','الهاتف','التليفون'],wa:['wa','واتساب'],area:['area','القرية/المنطقة','المنطقة','القرية'],members:['members','عدد الأفراد','عدد افراد الأسرة'],address:['address','العنوان'],income:['income','مصدر الدخل'],social:['social','الحالة الاجتماعية'],priority:['priority','درجة الاحتياج'],status:['status','حالة الملف'],needs:['needs','الاحتياجات'],notes:['notes','ملاحظات']};
+  const find=(row,key)=>{const k=Object.keys(row).find(x=>aliases[key].includes(norm(x)));return k?row[k]:''};
+  const prepared=rows.filter(r=>find(r,'name')).map(r=>({id:crypto.randomUUID(),no:nextNo(),name:String(find(r,'name')).trim(),nid:String(find(r,'nid')).trim(),birth:'',social:String(find(r,'social')||'غير محدد'),phone:String(find(r,'phone')||''),wa:String(find(r,'wa')||''),area:String(find(r,'area')||''),members:+find(r,'members')||1,address:String(find(r,'address')||''),income:String(find(r,'income')||''),needs:String(find(r,'needs')||'').split(/[,،;]/).map(x=>x.trim()).filter(Boolean),priority:['عاجل','متوسط','عادي'].includes(String(find(r,'priority')))?String(find(r,'priority')):'عادي',status:['نشطة','مغلقة','تحت الدراسة','موقوفة'].includes(String(find(r,'status')))?String(find(r,'status')):'نشطة',notes:String(find(r,'notes')||''),created:new Date().toISOString(),follow:false,family:[],aid:[],docs:[],visits:[]}));
+  if(!prepared.length)throw new Error('لم أجد أسماء حالات. راجع عنوان عمود الاسم في الصف الأول.');
+  if(!confirm('سيتم إضافة '+prepared.length+' حالة جديدة إلى النظام. هل تريد المتابعة؟'))return;
+  // Assign sequential numbers against all current and imported records.
+  let n=cases.reduce((m,c)=>Math.max(m,+c.no||0),0);
+  prepared.forEach(c=>c.no=String(++n).padStart(6,'0'));
+  cases.unshift(...prepared);await saveNow();renderAll();alert('تم استيراد '+prepared.length+' حالة بنجاح.');
+ }catch(e){alert('تعذر استيراد Excel: '+e.message)}
+}
 </script>
 </body></html>
